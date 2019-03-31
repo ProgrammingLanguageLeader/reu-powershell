@@ -11,7 +11,7 @@ function Write-MessageToWord {
     $WordApplication.Visible = $true
     $Document = $WordApplication.Documents.Add()
     $WordApplication.Selection.TypeText($Message)
-    $Document.SaveAs([ref] $FilePath)
+    $Document.SaveAs([ref] $FilePath.FullName)
     $WordApplication.Quit()
 }
 
