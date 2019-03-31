@@ -30,4 +30,4 @@ Get-RunningAndStoppedServicesCount
 - [x] Задание 18
 - [x] Задание 19
 - [ ] Задание 20
-- [ ] Задание 21
+- [x] Задание 21
