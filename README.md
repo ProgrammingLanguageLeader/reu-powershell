@@ -6,7 +6,7 @@
 Пример:
 ```powershell
 Import-Module task1.psm1
-GetRunningAndStoppedServicesCount
+Get-RunningAndStoppedServicesCount
 ```
 
 ## TODO:
@@ -21,7 +21,7 @@ GetRunningAndStoppedServicesCount
 - [x] Задание 9
 - [x] Задание 10
 - [x] Задание 11
-- [ ] Задание 12
+- [x] Задание 12
 - [ ] Задание 13
 - [ ] Задание 14
 - [ ] Задание 15
