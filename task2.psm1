@@ -1,47 +1,22 @@
-function DirInf {
-    param (
-        [String] $Path = "."
-    )
-    $DirectoriesCount = (Get-ChildItem $Path -Directory | Measure-Object).Count
-    $FilesCount = (Get-ChildItem $Path -File | Measure-Object).Count
+<#
+Выдать желтым цветом общее время использования центрального процессора активными процессами. 
+И, дополнительно, количество таких процессов.
+#>
+
+function Get-RunningProcessesCpuTimeAmountAndNumber {
+    $RunningProcesses = Get-Process | Where-Object { $_.CPU -gt 0 }
+    $CPUTimeAmount = ($RunningProcesses | Measure-Object CPU -Sum).Sum
+    $RunningProcessesNumber = ($RunningProcesses | Measure-Object).Count
     return @{
-        "DirectoriesCount" = $DirectoriesCount;
-        "FilesCount" = $FilesCount;
+        CPUTimeAmount = $CPUTimeAmount;
+        RunningProcessesNumber = $RunningProcessesNumber;
     }
 }
 
-function CurDirInf {
-    param (
-        [String] $Path = ".",
-        [Int16] $DepthLevel = 0
-    )
-    $DirectoryName = $(Resolve-Path $Path).Path
-    $Offset = ""
-    for ($Depth = 0; $Depth -lt $DepthLevel; $Depth++) {
-        $Offset += "  "
-    }
-    return "$Offset $DepthLevel $DirectoryName"
+function Get-StyledRunningProcessesCpuTimeAmountAndNumber {
+    $ProcessesInfo = Get-RunningProcessesCpuTimeAmountAndNumber
+    Write-Host -ForegroundColor Yellow "CPU Time Amount = $($ProcessesInfo.CPUTimeAmount)"
+    Write-Host -ForegroundColor Yellow "Running Processes Number = $($ProcessesInfo.RunningProcessesNumber)"
 }
 
-function GoDirs {
-    param (
-        [String] $Path = ".",
-        [Int16] $DepthLevel = 0
-    )
-    $DirectoryInfo = DirInf -Path $Path
-    $DirectoryOutput = `
-        "$(CurDirInf -Path $Path -DepthLevel $DepthLevel)" `
-        + " | Dirs - $($DirectoryInfo.DirectoriesCount)" `
-        + " | Files - $($DirectoryInfo.FilesCount)"
-    Write-Host $DirectoryOutput
-    $SubDirectories = Get-ChildItem $Path -Directory -Name
-    foreach ($SubDirectory in $SubDirectories) {
-        $SubDirectoryPath = Join-Path $Path $SubDirectory
-        $SubDirectoryDepthLevel = $DepthLevel + 1
-        GoDirs -Path $SubDirectoryPath -DepthLevel $SubDirectoryDepthLevel
-    }
-}
-
-Export-ModuleMember DirInf
-Export-ModuleMember CurDirInf
-Export-ModuleMember GoDirs
+Export-ModuleMember Get-StyledRunningProcessesCpuTimeAmountAndNumber
