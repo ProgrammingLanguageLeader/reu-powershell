@@ -4,7 +4,7 @@
 
 function Write-MessageToWord {
     param (
-        [string] $FilePath,
+        [System.IO.FileInfo] $FilePath,
         [string] $Message = "Hello from PowerShell!"
     )
     $WordApplication = New-Object -ComObject word.application

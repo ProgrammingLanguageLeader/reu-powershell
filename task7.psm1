@@ -5,8 +5,8 @@
 
 function Remove-FileFromFolder {
     param (
-        [string] $File,
-        [string] $Folder = "."
+        [System.IO.FileInfo] $File,
+        [System.IO.FileInfo] $Folder = "."
     )
     $FileAbsolutePath = Join-Path (Resolve-Path $Folder).Path $File
     Remove-Item $FileAbsolutePath

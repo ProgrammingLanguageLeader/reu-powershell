@@ -4,7 +4,7 @@
 
 function DirInf {
     param (
-        [string] $Path = "."
+        [System.IO.FileInfo] $Path = "."
     )
     $DirectoriesCount = (Get-ChildItem $Path -Directory | Measure-Object).Count
     $FilesCount = (Get-ChildItem $Path -File | Measure-Object).Count
@@ -16,7 +16,7 @@ function DirInf {
 
 function CurDirInf {
     param (
-        [string] $Path = ".",
+        [System.IO.FileInfo] $Path = ".",
         [int16] $DepthLevel = 0
     )
     $DirectoryName = $(Resolve-Path $Path).Path
