@@ -9,6 +9,7 @@
 class MemoryManager {
     hidden static [char] $FREE_MEMORY_SYMBOL = '0'
     hidden static [int] $DEFAULT_MEMORY_SIZE = 100
+    hidden static [double] $COMPRESSION_COEFFICIENT = 0.2
     hidden [hashtable] $Processes = @{}
     hidden [string] $MemoryMap = [MemoryManager]::FREE_MEMORY_SYMBOL.ToString() * [MemoryManager]::DEFAULT_MEMORY_SIZE
     hidden [int] $AvailableMemory = [MemoryManager]::DEFAULT_MEMORY_SIZE
@@ -21,6 +22,7 @@ class MemoryManager {
             $ProcessName, @{
                 MemorySize = $MemorySize;
                 FillingSymbol = $FillingSymbol;
+                Compressed = $false;
             }
         )
         $this.AllocateMemory($MemorySize, $FillingSymbol)
@@ -39,8 +41,48 @@ class MemoryManager {
         return $this.MemoryMap
     }
 
-    [hashtable] GetProcesses() {
-        return $this.Processes
+    [array] GetProcesses() {
+        $ProcessesArray = @()
+        foreach ($ProcessName in $this.Processes.Keys) {
+            $ProcessObject = New-Object -TypeName PSObject
+            Add-Member `
+                -InputObject $ProcessObject `
+                -MemberType NoteProperty `
+                -Name ProcessName `
+                -Value $ProcessName
+            Add-Member `
+                -InputObject $ProcessObject `
+                -MemberType NoteProperty `
+                -Name MemorySize `
+                -Value $this.Processes[$ProcessName].MemorySize;
+            Add-Member `
+                -InputObject $ProcessObject `
+                -MemberType NoteProperty `
+                -Name Compressed `
+                -Value $this.Processes[$ProcessName].Compressed;
+            Add-Member `
+                -InputObject $ProcessObject `
+                -MemberType NoteProperty `
+                -Name FillingSymbol `
+                -Value $this.Processes[$ProcessName].FillingSymbol;
+            $ProcessesArray += $ProcessObject
+        }
+        return $ProcessesArray
+    }
+
+    [void] CompressMemory() {
+        foreach ($ProcessName in $this.Processes.Keys) {
+            $Process = $this.Processes[$ProcessName]
+            if ($Process.Compressed) {
+                continue
+            }
+            $OldMemorySize = $Process.MemorySize
+            $FreeMemorySize = [System.Math]::Ceiling($OldMemorySize * [MemoryManager]::COMPRESSION_COEFFICIENT)
+            $Process.MemorySize = $OldMemorySize - $FreeMemorySize
+            $Process.Compressed = $true
+            $this.FreeMemory($FreeMemorySize, $Process.FillingSymbol)
+        }
+        Write-Host "Memory was compressed"
     }
 
     hidden AllocateMemory([int] $MemorySize, [char] $FillingSymbol) {
@@ -58,7 +100,16 @@ class MemoryManager {
     }
 
     hidden FreeMemory([int] $MemorySize, [char] $FillingSymbol) {
-        $this.MemoryMap = $this.MemoryMap.Replace($FillingSymbol, [MemoryManager]::FREE_MEMORY_SYMBOL)
+        $MemoryFreed = 0        
+        for ($CellIndex = 0; $CellIndex -lt $this.MemoryMap.Length; $CellIndex++) {
+            if ($this.MemoryMap[$CellIndex] -eq $FillingSymbol) {
+                $this.MemoryMap = $this.MemoryMap.Remove($CellIndex, 1).Insert($CellIndex, [MemoryManager]::FREE_MEMORY_SYMBOL)
+                $MemoryFreed++
+            }
+            if ($MemoryFreed -eq $MemorySize) {
+                break
+            }
+        }
         $this.AvailableMemory += $MemorySize
     }
 }
@@ -95,7 +146,7 @@ function Start-ProcessDispatcherDialog {
             }
 
             "processes" {
-                $MemoryManagerInstance.GetProcesses()
+                Write-Host ($MemoryManagerInstance.GetProcesses() | Out-String)
             }
             
             "memory" {
@@ -103,13 +154,14 @@ function Start-ProcessDispatcherDialog {
             }
 
             "zip" {
-                Write-Host "Not today (:"
+                $MemoryManagerInstance.CompressMemory()
             }
 
             default {
                 Write-Host "Unknown command"
             }
         }
+        Write-Host ""
         $Input = Read-UserCommand
     }
     Write-Host "Dialog was ended"
